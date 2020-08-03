@@ -44,11 +44,11 @@ async function main() {
   const token = env("GITHUB_TOKEN");
   const octokit = new Octokit({
     auth: `token ${token}`,
-    userAgent: "ginxo/github-build-chain-action"
+    userAgent: "kiegroup/github-build-chain-action"
   });
 
   let config = undefined;
-  if(args.url) {
+  if (args.url) {
     config = createConfigLocally(octokit, args.url, process.env);
   } else {
     const eventPath = env("GITHUB_EVENT_PATH");
