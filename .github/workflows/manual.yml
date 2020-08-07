@@ -1,0 +1,28 @@
+name: Build Chain
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+jobs:
+  cherry-pick:
+    strategy:
+      matrix:
+        branches: [openjdk8, openjdk11]
+    runs-on: ubuntu-latest
+    name: Cherry Pick
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set git variables
+        id: git
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Print Git variables
+        run: |
+          echo "Branch: ${{ steps.git.outputs.branch }}"
+          echo "Sha: ${{ steps.git.outputs.sha_short }}"
