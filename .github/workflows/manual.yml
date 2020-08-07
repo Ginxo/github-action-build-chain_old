@@ -29,6 +29,7 @@ jobs:
         run: |
           git config --global user.name "${{ secrets.GH_USER }}"
           git config --global user.email "${{ secrets.GH_MAIL }}"
+          git fetch origin
           git checkout origin/${{ matrix.branches }}
           git cherry-pick ${{ steps.git.outputs.sha_long }}
           git push origin ${{ matrix.branches }}
