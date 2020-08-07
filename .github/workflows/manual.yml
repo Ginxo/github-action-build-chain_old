@@ -28,3 +28,9 @@ jobs:
           echo "Branch: ${{ steps.git.outputs.branch }}"
           echo "Sha: ${{ steps.git.outputs.sha_long }}"
           echo "Sha short: ${{ steps.git.outputs.sha_short }}"
+      - name: Cherry Pick and push
+        run: |
+          git cherry-pick ${{ steps.git.outputs.sha_long }}
+          git push origin ${{ matrix.branches }}
+          
+          
