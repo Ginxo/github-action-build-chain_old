@@ -30,8 +30,8 @@ jobs:
           echo "Sha short: ${{ steps.git.outputs.sha_short }}"
       - name: Cherry Pick and push
         run: |
-          git config user.name ${{ secrets.GH_USER }}
-          git config user.email "${{ secrets.GH_MAIL }}"
+          git config --global user.name ${{ secrets.GH_USER }}
+          git config --global user.email "${{ secrets.GH_MAIL }}"
           git cherry-pick ${{ steps.git.outputs.sha_long }}
           git push origin ${{ matrix.branches }}
           
