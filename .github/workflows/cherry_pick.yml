@@ -14,6 +14,7 @@ jobs:
       uses: gorillio/github-action-cherry-pick@master
       with:
         pr_branch: 'openjdk8'
+        pr_labels: 'openjdk8'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITBOT_EMAIL: ${{ secrets.GH_MAIL }}
@@ -22,6 +23,7 @@ jobs:
       uses: gorillio/github-action-cherry-pick@master
       with:
         pr_branch: 'openjdk11'
+        pr_labels: 'openjdk11'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITBOT_EMAIL: ${{ secrets.GH_MAIL }}
