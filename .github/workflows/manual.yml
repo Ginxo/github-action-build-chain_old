@@ -1,9 +1,5 @@
 name: Build Chain
 
-on:
-  push:
-    branches:
-      - master
 jobs:
   cherry-pick:
     strategy:
