@@ -2481,26 +2481,7 @@ module.exports = windowsRelease;
 /***/ }),
 /* 50 */,
 /* 51 */,
-/* 52 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-const noTreatment = __webpack_require__(981);
-const mavenTreatment = __webpack_require__(121);
-
-function treatCommand(command) {
-  let libraryToExecute = noTreatment;
-  if (command.match(/.*mvn .*/)) {
-    libraryToExecute = mavenTreatment;
-  }
-  return libraryToExecute.treat(command);
-}
-
-module.exports = {
-  treatCommand
-};
-
-
-/***/ }),
+/* 52 */,
 /* 53 */,
 /* 54 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
@@ -4124,19 +4105,7 @@ module.exports.default = macosRelease;
 /***/ }),
 /* 119 */,
 /* 120 */,
-/* 121 */
-/***/ (function(module) {
-
-function treat(command) {
-  return `${command} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B`;
-}
-
-module.exports = {
-  treat
-};
-
-
-/***/ }),
+/* 121 */,
 /* 122 */,
 /* 123 */,
 /* 124 */,
@@ -22911,7 +22880,6 @@ const {
 } = __webpack_require__(165);
 const { logger } = __webpack_require__(79);
 const { execute } = __webpack_require__(703);
-const { treatCommand } = __webpack_require__(52);
 const core = __webpack_require__(393);
 const uploadArtifacts = __webpack_require__(395);
 const { getCheckoutInfo } = __webpack_require__(195);
@@ -23096,9 +23064,12 @@ async function archiveArtifacts(
 }
 
 async function executeBuildCommands(cwd, buildCommands, project) {
-  for (const command of buildCommands) {
-    await execute(cwd, treatCommand(command), project);
-  }
+  logger.info("Executing df -h. Checking disk space BEFORE");
+  await execute(cwd, "df -h", project);
+  logger.info("Executing mvn clean install");
+  await execute(cwd, "mvn clean install -DskipTests", project);
+  logger.info("Executing df -h. Checking disk space AFTER");
+  await execute(cwd, "df -h", project);
 }
 
 module.exports = {
@@ -32431,19 +32402,7 @@ module.exports = {
 /* 978 */,
 /* 979 */,
 /* 980 */,
-/* 981 */
-/***/ (function(module) {
-
-function treat(command) {
-  return command;
-}
-
-module.exports = {
-  treat
-};
-
-
-/***/ }),
+/* 981 */,
 /* 982 */,
 /* 983 */
 /***/ (function(module, __unusedexports, __webpack_require__) {

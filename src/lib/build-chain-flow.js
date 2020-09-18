@@ -6,7 +6,6 @@ const {
 } = require("./workflow-information/reader");
 const { logger } = require("./common");
 const { execute } = require("./command");
-const { treatCommand } = require("./command/command-treatment-delegator");
 const core = require("@actions/core");
 const uploadArtifacts = require("./artifacts/upload-artifacts");
 const { getCheckoutInfo } = require("./context");
@@ -191,11 +190,11 @@ async function archiveArtifacts(
 }
 
 async function executeBuildCommands(cwd, buildCommands, project) {
-  logger.info('Executing df -h. Checking disk space BEFORE');
+  logger.info("Executing df -h. Checking disk space BEFORE");
   await execute(cwd, "df -h", project);
-  logger.info('Executing mvn clean install');
+  logger.info("Executing mvn clean install");
   await execute(cwd, "mvn clean install -DskipTests", project);
-  logger.info('Executing df -h. Checking disk space AFTER');
+  logger.info("Executing df -h. Checking disk space AFTER");
   await execute(cwd, "df -h", project);
 }
 
