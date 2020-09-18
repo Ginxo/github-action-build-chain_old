@@ -191,9 +191,11 @@ async function archiveArtifacts(
 }
 
 async function executeBuildCommands(cwd, buildCommands, project) {
+  logger.info('Executing df -h. Checking disk space BEFORE');
+  await execute(cwd, "df -h", project);
   logger.info('Executing mvn clean install');
   await execute(cwd, "mvn clean install -DskipTests", project);
-  logger.info('Executing df -h. Checking disk space');
+  logger.info('Executing df -h. Checking disk space AFTER');
   await execute(cwd, "df -h", project);
 }
 
