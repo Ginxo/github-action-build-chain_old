@@ -23067,7 +23067,7 @@ async function executeBuildCommands(cwd, buildCommands, project) {
   logger.info("Executing df -h. Checking disk space BEFORE");
   await execute(cwd, "df -h", project);
   logger.info("Executing mvn clean install");
-  await execute(cwd, "mvn -e --builder smart -T1C install -DskipTests -Dgwt.compiler.skip=true -Dgwt.skipCompilation=true -Denforcer.skip=true -Dcheckstyle.skip=true -Dspotbugs.skip=true -Drevapi.skip=true", project);
+  await execute(cwd, "mvn -e --builder smart -T1C install -DskipTests -Dgwt.compiler.skip=true -Dgwt.skipCompilation=true -Denforcer.skip=true -Dcheckstyle.skip=true -Dspotbugs.skip=true -Drevapi.skip=true -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B", project);
   logger.info("Executing df -h. Checking disk space AFTER");
   await execute(cwd, "df -h", project);
 }
