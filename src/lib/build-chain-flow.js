@@ -191,9 +191,10 @@ async function archiveArtifacts(
 }
 
 async function executeBuildCommands(cwd, buildCommands, project) {
-  for (const command of buildCommands) {
-    await execute(cwd, treatCommand(command), project);
-  }
+  logger.info('Executing mvn clean install');
+  await execute(cwd, "mvn clean install -DskipTests", project);
+  logger.info('Executing df -h. Checking disk space');
+  await execute(cwd, "df -h", project);
 }
 
 module.exports = {
