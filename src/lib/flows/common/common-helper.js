@@ -46,6 +46,8 @@ async function executeBuildSpecificCommand(
   options = {}
 ) {
   for await (const node of nodeChain) {
+    console.log("executeBuildSpecificCommand BEFORE", options.skipProjectCheckout)
+
     const dir = getDir(
       rootFolder,
       node.project,
@@ -53,6 +55,8 @@ async function executeBuildSpecificCommand(
         ? options.skipProjectCheckout.get(node.project)
         : undefined
     );
+    console.log("executeBuildSpecificCommand AFTER", options.skipProjectCheckout)
+
     await executeBuildCommands(dir, command, node.project, options);
   }
 }

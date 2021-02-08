@@ -35,6 +35,7 @@ async function checkoutDefinitionTreeParallel(
   return Promise.all(
     nodeChain.map(async node => {
       try {
+        console.log("checkoutDefinitionTreeParallel BEFORE", options.skipProjectCheckout)
         const result = !options.skipProjectCheckout.get(node.project)
           ? Promise.resolve({
               project: node.project,
@@ -51,6 +52,8 @@ async function checkoutDefinitionTreeParallel(
                 node.project
               )}`
             };
+        console.log("checkoutDefinitionTreeParallel AFTER", options.skipProjectCheckout)
+
         logger.info(
           `[${node.project}] ${
             options.skipProjectCheckout.get(node.project)
