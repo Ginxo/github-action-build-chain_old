@@ -1,3 +1,7 @@
 .env
 node_modules/
 *.code-workspace
+locally_execution/**/*
+test/**/_temp/**/*
+build_chain_20*/**/*
+yarn.lock

@@ -24,7 +24,7 @@ function git(cwd, ...args) {
   const stdio = [
     "ignore",
     "pipe",
-    logger.level === "trace" || logger.level === "debug" ? "inherit" : "ignore"
+    logger.level === "trace" || logger.level === "debug" ? "inherit" : "pipe"
   ];
   // the URL passed to the clone command could contain a password!
   const command = `git ${args.join(" ")}`;
@@ -37,16 +37,21 @@ function git(cwd, ...args) {
     );
     const buffers = [];
     proc.stdout.on("data", data => buffers.push(data));
+    proc.stderr.on("data", data => buffers.push(data));
+
     proc.on("error", () => {
       reject(new Error(`command failed: ${command}`));
     });
     proc.on("exit", code => {
+      const stdoutData = Buffer.concat(buffers);
       if (code === 0) {
-        const data = Buffer.concat(buffers);
-        resolve(data.toString("utf8").trim());
+        resolve(stdoutData.toString("utf8").trim());
       } else {
         reject(
-          new ExitError(`command failed with code ${code}: ${command}.`, code)
+          new ExitError(
+            `command ${command} failed with code ${code}. Error Message: ${stdoutData}`,
+            code
+          )
         );
       }
     });
@@ -63,8 +68,6 @@ async function clone(from, to, branch) {
       "--no-tags",
       "--branch",
       branch,
-      "--depth",
-      FETCH_DEPTH,
       from,
       to
     );
@@ -78,8 +81,6 @@ async function fetch(dir, branch) {
     dir,
     "fetch",
     "--quiet",
-    "--depth",
-    FETCH_DEPTH,
     "origin",
     `${branch}:refs/remotes/origin/${branch}`
   );
@@ -153,6 +154,10 @@ async function mergeCommits(dir, ref) {
     .filter(commit => commit.length > 1);
 }
 
+async function merge(dir, repositoryUrl, branch) {
+  return await git(dir, "pull", repositoryUrl, branch);
+}
+
 async function head(dir) {
   return await git(dir, "show-ref", "--head", "-s", "/HEAD");
 }
@@ -195,6 +200,122 @@ async function doesBranchExist(octokit, owner, repo, branch) {
   }
 }
 
+/**
+ * Checks if there is a pull request either from a forked project or the same project
+ * @param {Object} octokit instance
+ * @param {String} owner the repo owner or group
+ * @param {String} repo the repository name
+ * @param {String} branch the branch of the pull request to look for
+ * @param {String} fromAuthor the pull request author
+ */
+async function hasPullRequest(octokit, owner, repo, branch, fromAuthor) {
+  return (
+    (await hasForkPullRequest(octokit, owner, repo, branch, fromAuthor)) ||
+    (await hasOriginPullRequest(octokit, owner, repo, branch))
+  );
+}
+
+/**
+ * Checks if there is a pull request from a forked project
+ * @param {Object} octokit instance
+ * @param {String} owner the repo owner or group
+ * @param {String} repo the repository name
+ * @param {String} branch the branch of the pull request to look for
+ * @param {String} fromAuthor the pull request author
+ */
+async function hasForkPullRequest(octokit, owner, repo, branch, fromAuthor) {
+  assert(owner, "owner is not defined");
+  assert(repo, "repo is not defined");
+  assert(branch, "branch is not defined");
+  assert(fromAuthor, "fromAuthor is not defined");
+  try {
+    const { status, data } = await octokit.pulls.list({
+      owner,
+      repo,
+      state: "open",
+      head: `${fromAuthor}:${branch}`
+    });
+    return status == 200 && data.length > 0;
+  } catch (e) {
+    logger.error(
+      `Error getting pull request list from https://api.github.com/repos/${owner}/${repo}/pulls?head=${fromAuthor}:${branch}&state=open'".`
+    );
+    throw e;
+  }
+}
+
+/**
+ * Checks if there is a pull request from the same project
+ * @param {Object} octokit instance
+ * @param {String} owner the repo owner or group
+ * @param {String} repo the repository name
+ * @param {String} branch the branch of the pull request to look for
+ */
+async function hasOriginPullRequest(octokit, owner, repo, branch) {
+  assert(owner, "owner is not defined");
+  assert(repo, "repo is not defined");
+  assert(branch, "branch is not defined");
+  try {
+    const { status, data } = await octokit.pulls.list({
+      owner,
+      repo,
+      state: "open",
+      head: `${owner}:${branch}`
+    });
+    return status == 200 && data.length > 0;
+  } catch (e) {
+    logger.error(
+      `Error getting pull request list from https://api.github.com/repos/${owner}/${repo}/pulls?head=${owner}:${branch}&state=open'".`
+    );
+    throw e;
+  }
+}
+
+async function getForkedProject(
+  octokit,
+  owner,
+  repo,
+  wantedOwner,
+  page = 1,
+  per_page = 100
+) {
+  assert(owner, "owner is not defined");
+  assert(repo, "repo is not defined");
+  assert(wantedOwner, "wantedOwner is not defined");
+  assert(page, "page is not defined");
+  try {
+    const { status, data } = await octokit.repos.listForks({
+      owner,
+      repo,
+      page
+    });
+    if (status == 200) {
+      if (data && data.length > 0) {
+        const forkedProject = data.find(
+          forkedProject => forkedProject.owner.login === wantedOwner
+        );
+        return forkedProject
+          ? forkedProject
+          : await getForkedProject(
+              octokit,
+              owner,
+              repo,
+              wantedOwner,
+              ++page,
+              per_page
+            );
+      } else {
+        return undefined;
+      }
+    }
+  } catch (e) {
+    logger.error(
+      `Error getting forked project list from  https://api.github.com/repos/${owner}/${repo}/forks?per_page=${per_page}&page=${page}'".`
+    );
+    throw e;
+  }
+}
+
 module.exports = {
   ExitError,
   git,
@@ -204,9 +325,12 @@ module.exports = {
   fetchDeepen,
   mergeBase,
   mergeCommits,
+  merge,
   head,
   sha,
   rebase,
   push,
-  doesBranchExist
+  doesBranchExist,
+  hasPullRequest,
+  getForkedProject
 };

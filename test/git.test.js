@@ -1,6 +1,10 @@
 const fse = require("fs-extra");
 const git = require("../src/lib/git");
 const { tmpdir } = require("../src/lib/fs-helper");
+const prInfo = require("./resources/pr_list_info.json");
+const prInfoEmpty = require("./resources/pr_list_info_empty.json");
+const forkedProjectListInfo = require("./resources/forked_projects_list_info.json");
+const forkedProjectListInfoEmpty = require("./resources/forked_projects_list_info_empty.json");
 
 async function init(dir) {
   await fse.mkdirs(dir);
@@ -109,4 +113,201 @@ test("mergeCommits returns the correct commits", async () => {
     expect(commits[0][0]).toBe(head2);
     expect(commits[0][1]).toBe(head1);
   });
+});
+
+test("mergeCommits returns the correct commits", async () => {
+  await tmpdir(async path => {
+    await init(path);
+    await commit(path, "master %d", 2);
+    const head1 = await git.head(path);
+    await git.git(path, "checkout", "-b", "branch", "HEAD^");
+    const head2 = await git.head(path);
+    await git.git(path, "merge", "--no-ff", "master");
+
+    const commits = await git.mergeCommits(path, "HEAD^");
+    expect(commits).toHaveLength(1);
+    expect(commits[0][0]).toBe(head2);
+    expect(commits[0][1]).toBe(head1);
+  });
+});
+
+test("hasPullRequest origin true", async () => {
+  const octokit = {
+    pulls: {
+      list: jest.fn(({ owner, repo, state, head }) => {
+        return owner === "ownerx" &&
+          repo === "repox" &&
+          state === "open" &&
+          head === "authorx:branchx"
+          ? { status: 200, data: prInfo }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.hasPullRequest(
+    octokit,
+    "ownerx",
+    "repox",
+    "branchx",
+    "authorx"
+  );
+
+  expect(result).toBe(true);
+  expect(octokit.pulls.list).toHaveBeenCalledTimes(1);
+});
+
+test("hasPullRequest forked true", async () => {
+  const octokit = {
+    pulls: {
+      list: jest.fn(({ owner, repo, state, head }) => {
+        return owner === "ownerx" &&
+          repo === "repox" &&
+          state === "open" &&
+          head === "authorx:branchx"
+          ? { status: 200, data: prInfoEmpty }
+          : owner === "ownerx" &&
+            repo === "repox" &&
+            state === "open" &&
+            head === "ownerx:branchx"
+          ? { status: 200, data: prInfo }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.hasPullRequest(
+    octokit,
+    "ownerx",
+    "repox",
+    "branchx",
+    "authorx"
+  );
+
+  expect(result).toBe(true);
+  expect(octokit.pulls.list).toHaveBeenCalledTimes(2);
+});
+
+test("hasPullRequest false", async () => {
+  const octokit = {
+    pulls: {
+      list: jest.fn(({ owner, repo, state, head }) => {
+        return owner === "ownerx" &&
+          repo === "repox" &&
+          state === "open" &&
+          head === "authorx:branchx"
+          ? { status: 200, data: prInfoEmpty }
+          : owner === "ownerx" &&
+            repo === "repox" &&
+            state === "open" &&
+            head === "ownerx:branchx"
+          ? { status: 200, data: prInfoEmpty }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.hasPullRequest(
+    octokit,
+    "ownerx",
+    "repox",
+    "branchx",
+    "authorx"
+  );
+
+  expect(result).toBe(false);
+  expect(octokit.pulls.list).toHaveBeenCalledTimes(2);
+});
+
+test("getForkedProject existing", async () => {
+  const octokit = {
+    repos: {
+      listForks: jest.fn(({ owner, repo }) => {
+        return owner === "ownerx" && repo === "repox"
+          ? { status: 200, data: forkedProjectListInfo }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.getForkedProject(
+    octokit,
+    "ownerx",
+    "repox",
+    "Ginxo"
+  );
+
+  expect(octokit.repos.listForks).toHaveBeenCalledTimes(1);
+  expect(result).not.toBeUndefined();
+  expect(result.id).toBe(225822299);
+});
+
+test("getForkedProject not existing", async () => {
+  const octokit = {
+    repos: {
+      listForks: jest.fn(({ owner, repo, page }) => {
+        return owner === "ownerx" && repo === "repox" && page == 1
+          ? { status: 200, data: forkedProjectListInfo }
+          : owner === "ownerx" && repo === "repox" && page == 2
+          ? { status: 304, data: forkedProjectListInfoEmpty }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.getForkedProject(
+    octokit,
+    "ownerx",
+    "repox",
+    "weirdowner"
+  );
+
+  expect(octokit.repos.listForks).toHaveBeenCalledTimes(2);
+  expect(result).toBeUndefined();
+});
+
+test("getForkedProject empty", async () => {
+  const octokit = {
+    repos: {
+      listForks: jest.fn(({ owner, repo, page }) => {
+        return owner === "ownerx" && repo === "repox" && page == 1
+          ? { status: 200, data: forkedProjectListInfoEmpty }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.getForkedProject(
+    octokit,
+    "ownerx",
+    "repox",
+    "weirdowner"
+  );
+
+  expect(octokit.repos.listForks).toHaveBeenCalledTimes(1);
+  expect(result).toBeUndefined();
+});
+
+test("getForkedProject second page empty", async () => {
+  const octokit = {
+    repos: {
+      listForks: jest.fn(({ owner, repo, page }) => {
+        return owner === "ownerx" && repo === "repox" && page == 1
+          ? { status: 200, data: forkedProjectListInfo }
+          : owner === "ownerx" && repo === "repox" && page == 2
+          ? { status: 200, data: forkedProjectListInfoEmpty }
+          : undefined;
+      })
+    }
+  };
+
+  const result = await git.getForkedProject(
+    octokit,
+    "ownerx",
+    "repox",
+    "weirdowner"
+  );
+
+  expect(octokit.repos.listForks).toHaveBeenCalledTimes(2);
+  expect(result).toBeUndefined();
 });
