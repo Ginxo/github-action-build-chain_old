@@ -12,6 +12,13 @@ async function executeBuild(
   projectTriggeringJob,
   options = {}
 ) {
+  logger.info(
+    "[TESTING] executeBuild",
+    rootFolder,
+    nodeChain.map(node => node.project),
+    projectTriggeringJob,
+    options
+  );
   const projectTriggeringJobIndex = nodeChain.findIndex(
     node => node.project === projectTriggeringJob
   );

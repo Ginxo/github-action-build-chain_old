@@ -542,6 +542,13 @@ async function executeBuild(
   projectTriggeringJob,
   options = {}
 ) {
+  logger.info(
+    "[TESTING] executeBuild",
+    rootFolder,
+    nodeChain.map(node => node.project),
+    projectTriggeringJob,
+    options
+  );
   const projectTriggeringJobIndex = nodeChain.findIndex(
     node => node.project === projectTriggeringJob
   );
@@ -8130,11 +8137,6 @@ async function checkoutDefinitionTreeParallel(
                 node.project
               )}`
             };
-        console.log(
-          "checkoutDefinitionTreeParallel AFTER",
-          options.skipProjectCheckout
-        );
-
         logger.info(
           `[${node.project}] ${
             options.skipProjectCheckout.get(node.project)
