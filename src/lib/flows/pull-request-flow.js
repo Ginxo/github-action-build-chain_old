@@ -21,18 +21,17 @@ async function start(
   core.startGroup(
     `[Pull Request Flow] Checking out ${context.config.github.groupProject} and its dependencies`
   );
-  const leafToGetTreeFrom = context.config.github.inputs.startingProject
+  const projectTriggeringJob = context.config.github.inputs.startingProject
     ? context.config.github.inputs.startingProject
     : context.config.github.repository;
   const definitionTree = await getTreeForProject(
     context.config.github.inputs.definitionFile,
-    leafToGetTreeFrom,
+    projectTriggeringJob,
     await getPlaceHolders(context, context.config.github.inputs.definitionFile)
   );
   const nodeChain = await parentChainFromNode(definitionTree);
-  logger.info("TESTING");
   logger.info(
-    `TESTING: Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
+    `Tree for project ${projectTriggeringJob}. Dependencies: ${nodeChain.map(
       node => "\n" + node.project
     )}`
   );
@@ -51,7 +50,7 @@ async function start(
   const executionResult = await executeBuild(
     context.config.rootFolder,
     nodeChain,
-    context.config.github.repository,
+    projectTriggeringJob,
     options
   )
     .then(() => true)
@@ -60,7 +59,7 @@ async function start(
   if (options.isArchiveArtifacts) {
     core.startGroup(`[Pull Request Flow] Archiving artifacts...`);
     await archiveArtifacts(
-      nodeChain.find(node => node.project === context.config.github.repository),
+      nodeChain.find(node => node.project === projectTriggeringJob),
       nodeChain,
       executionResult === true ? ["success", "always"] : ["failure", "always"]
     );
