@@ -440,13 +440,11 @@ async function getEvent(octokit, eventUrl) {
   const m = eventUrl.match(GITHUB_URL_REGEXP);
   if (m && m[3] === "pull") {
     logger.debug("Getting PR data...");
-    logger.info("getEvent BEFORE");
     const { data: pull_request } = await octokit.pulls.get({
       owner: m[1],
       repo: m[2],
       pull_number: m[4]
     });
-    logger.info("getEvent AFTER");
     event = {
       action: "opened",
       ref: `refs/pull/${m[4]}/merge`,
@@ -542,13 +540,6 @@ async function executeBuild(
   projectTriggeringJob,
   options = {}
 ) {
-  logger.info(
-    "[TESTING] executeBuild",
-    rootFolder,
-    nodeChain.map(node => node.project),
-    projectTriggeringJob,
-    options
-  );
   const projectTriggeringJobIndex = nodeChain.findIndex(
     node => node.project === projectTriggeringJob
   );
@@ -583,11 +574,6 @@ async function executeBuildSpecificCommand(
   options = {}
 ) {
   for await (const node of nodeChain) {
-    console.log(
-      "executeBuildSpecificCommand BEFORE",
-      options.skipProjectCheckout
-    );
-
     const dir = getDir(
       rootFolder,
       node.project,
@@ -595,11 +581,6 @@ async function executeBuildSpecificCommand(
         ? options.skipProjectCheckout.get(node.project)
         : undefined
     );
-    console.log(
-      "executeBuildSpecificCommand AFTER",
-      options.skipProjectCheckout
-    );
-
     await executeBuildCommands(dir, command, node.project, options);
   }
 }

@@ -12,13 +12,6 @@ async function executeBuild(
   projectTriggeringJob,
   options = {}
 ) {
-  logger.info(
-    "[TESTING] executeBuild",
-    rootFolder,
-    nodeChain.map(node => node.project),
-    projectTriggeringJob,
-    options
-  );
   const projectTriggeringJobIndex = nodeChain.findIndex(
     node => node.project === projectTriggeringJob
   );
@@ -53,11 +46,6 @@ async function executeBuildSpecificCommand(
   options = {}
 ) {
   for await (const node of nodeChain) {
-    console.log(
-      "executeBuildSpecificCommand BEFORE",
-      options.skipProjectCheckout
-    );
-
     const dir = getDir(
       rootFolder,
       node.project,
@@ -65,11 +53,6 @@ async function executeBuildSpecificCommand(
         ? options.skipProjectCheckout.get(node.project)
         : undefined
     );
-    console.log(
-      "executeBuildSpecificCommand AFTER",
-      options.skipProjectCheckout
-    );
-
     await executeBuildCommands(dir, command, node.project, options);
   }
 }

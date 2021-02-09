@@ -31,13 +31,11 @@ async function getEvent(octokit, eventUrl) {
   const m = eventUrl.match(GITHUB_URL_REGEXP);
   if (m && m[3] === "pull") {
     logger.debug("Getting PR data...");
-    logger.info("getEvent BEFORE");
     const { data: pull_request } = await octokit.pulls.get({
       owner: m[1],
       repo: m[2],
       pull_number: m[4]
     });
-    logger.info("getEvent AFTER");
     event = {
       action: "opened",
       ref: `refs/pull/${m[4]}/merge`,
