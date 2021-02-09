@@ -18,6 +18,11 @@ async function checkoutDefinitionTree(
   flow = "pr",
   options = { skipProjectCheckout: new Map(), skipParallelCheckout: false }
 ) {
+  options.skipProjectCheckout = [null, undefined].includes(
+    options.skipProjectCheckout
+  )
+    ? new Map()
+    : options.skipProjectCheckout;
   const result = options.skipParallelCheckout
     ? await checkoutDefinitionTreeSequencial(context, nodeChain, flow, options)
     : await checkoutDefinitionTreeParallel(context, nodeChain, flow, options);
@@ -39,24 +44,22 @@ async function checkoutDefinitionTreeParallel(
           "checkoutDefinitionTreeParallel BEFORE",
           options.skipProjectCheckout
         );
-        const result =
-          [null, undefined].includes(options.skipProjectCheckout) ||
-          !options.skipProjectCheckout.get(node.project)
-            ? Promise.resolve({
-                project: node.project,
-                checkoutInfo: await checkoutAndComposeInfo(
-                  context,
-                  node,
-                  nodeTriggeringTheJob,
-                  flow
-                )
-              })
-            : {
-                project: node.project,
-                info: `not checked out. Folder to take sources from: ${options.skipProjectCheckout.get(
-                  node.project
-                )}`
-              };
+        const result = !options.skipProjectCheckout.get(node.project)
+          ? Promise.resolve({
+              project: node.project,
+              checkoutInfo: await checkoutAndComposeInfo(
+                context,
+                node,
+                nodeTriggeringTheJob,
+                flow
+              )
+            })
+          : {
+              project: node.project,
+              info: `not checked out. Folder to take sources from: ${options.skipProjectCheckout.get(
+                node.project
+              )}`
+            };
         console.log(
           "checkoutDefinitionTreeParallel AFTER",
           options.skipProjectCheckout

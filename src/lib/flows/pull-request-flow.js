@@ -14,7 +14,10 @@ const {
   archiveArtifacts
 } = require("../artifacts/build-chain-flow-archive-artifact-helper");
 
-async function start(context, options = { isArchiveArtifacts: true }) {
+async function start(
+  context,
+  options = { skipProjectCheckout: new Map(), isArchiveArtifacts: true }
+) {
   core.startGroup(
     `[Pull Request Flow] Checking out ${context.config.github.groupProject} and its dependencies`
   );
