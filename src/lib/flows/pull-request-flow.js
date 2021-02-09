@@ -29,7 +29,7 @@ async function start(context, options = { isArchiveArtifacts: true }) {
   const nodeChain = await parentChainFromNode(definitionTree);
     logger.info("TESTING")
   logger.info(
-    `Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
+    `TESTING: Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
       node => "\n" + node.project
     )}`
   );
