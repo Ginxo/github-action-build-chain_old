@@ -40,10 +40,6 @@ async function checkoutDefinitionTreeParallel(
   return Promise.all(
     nodeChain.map(async node => {
       try {
-        console.log(
-          "checkoutDefinitionTreeParallel BEFORE",
-          options.skipProjectCheckout
-        );
         const result = !options.skipProjectCheckout.get(node.project)
           ? Promise.resolve({
               project: node.project,
