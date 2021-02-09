@@ -27,7 +27,7 @@ async function start(context, options = { isArchiveArtifacts: true }) {
     await getPlaceHolders(context, context.config.github.inputs.definitionFile)
   );
   const nodeChain = await parentChainFromNode(definitionTree);
-    logger.info("TESTING")
+  logger.info("TESTING");
   logger.info(
     `TESTING: Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
       node => "\n" + node.project

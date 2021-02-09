@@ -440,11 +440,13 @@ async function getEvent(octokit, eventUrl) {
   const m = eventUrl.match(GITHUB_URL_REGEXP);
   if (m && m[3] === "pull") {
     logger.debug("Getting PR data...");
+    logger.info("getEvent BEFORE");
     const { data: pull_request } = await octokit.pulls.get({
       owner: m[1],
       repo: m[2],
       pull_number: m[4]
     });
+    logger.info("getEvent AFTER");
     event = {
       action: "opened",
       ref: `refs/pull/${m[4]}/merge`,
@@ -574,6 +576,11 @@ async function executeBuildSpecificCommand(
   options = {}
 ) {
   for await (const node of nodeChain) {
+    console.log(
+      "executeBuildSpecificCommand BEFORE",
+      options.skipProjectCheckout
+    );
+
     const dir = getDir(
       rootFolder,
       node.project,
@@ -581,6 +588,11 @@ async function executeBuildSpecificCommand(
         ? options.skipProjectCheckout.get(node.project)
         : undefined
     );
+    console.log(
+      "executeBuildSpecificCommand AFTER",
+      options.skipProjectCheckout
+    );
+
     await executeBuildCommands(dir, command, node.project, options);
   }
 }
@@ -2015,6 +2027,11 @@ function dependencyListToTree(dependencyList, buildConfiguration) {
 
     if (node.dependencies && node.dependencies.length > 0) {
       node.dependencies.forEach(dependency => {
+        if ([null, undefined].includes(map[dependency.project])) {
+          const errorMessage = `The project ${dependency.project} does not exist on project list. Please review your project definition file`;
+          console.error(errorMessage);
+          throw new Error(errorMessage);
+        }
         dependencyList[map[dependency.project].index].children.push({
           ...map[node.project].node
         });
@@ -8088,6 +8105,10 @@ async function checkoutDefinitionTreeParallel(
   return Promise.all(
     nodeChain.map(async node => {
       try {
+        console.log(
+          "checkoutDefinitionTreeParallel BEFORE",
+          options.skipProjectCheckout
+        );
         const result = !options.skipProjectCheckout.get(node.project)
           ? Promise.resolve({
               project: node.project,
@@ -8104,6 +8125,11 @@ async function checkoutDefinitionTreeParallel(
                 node.project
               )}`
             };
+        console.log(
+          "checkoutDefinitionTreeParallel AFTER",
+          options.skipProjectCheckout
+        );
+
         logger.info(
           `[${node.project}] ${
             options.skipProjectCheckout.get(node.project)
@@ -22712,9 +22738,9 @@ function read(fileContent) {
   try {
     return yaml.safeLoad(fileContent);
   } catch (e) {
-    throw new ReadYamlException(
-      `error reading yaml file content. Error: ${e.message}`
-    );
+    const errorMessage = `error reading yaml file content. Error: ${e.message}`;
+    console.error(errorMessage);
+    throw new ReadYamlException(errorMessage);
   }
 }
 
@@ -25027,9 +25053,9 @@ async function start(context, options = { isArchiveArtifacts: true }) {
     await getPlaceHolders(context, context.config.github.inputs.definitionFile)
   );
   const nodeChain = await parentChainFromNode(definitionTree);
-
+  logger.info("TESTING");
   logger.info(
-    `Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
+    `TESTING: Tree for project ${leafToGetTreeFrom}. Dependencies: ${nodeChain.map(
       node => "\n" + node.project
     )}`
   );
