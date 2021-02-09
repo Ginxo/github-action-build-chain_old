@@ -29,5 +29,3 @@ jobs:
           git checkout ${{ matrix.branches }}
           git cherry-pick ${{ steps.git.outputs.sha_long }}
           git push origin ${{ matrix.branches }}
-          
-          
