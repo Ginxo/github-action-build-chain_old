@@ -39,22 +39,24 @@ async function checkoutDefinitionTreeParallel(
           "checkoutDefinitionTreeParallel BEFORE",
           options.skipProjectCheckout
         );
-        const result = !options.skipProjectCheckout.get(node.project)
-          ? Promise.resolve({
-              project: node.project,
-              checkoutInfo: await checkoutAndComposeInfo(
-                context,
-                node,
-                nodeTriggeringTheJob,
-                flow
-              )
-            })
-          : {
-              project: node.project,
-              info: `not checked out. Folder to take sources from: ${options.skipProjectCheckout.get(
-                node.project
-              )}`
-            };
+        const result =
+          [null, undefined].includes(options.skipProjectCheckout) ||
+          !options.skipProjectCheckout.get(node.project)
+            ? Promise.resolve({
+                project: node.project,
+                checkoutInfo: await checkoutAndComposeInfo(
+                  context,
+                  node,
+                  nodeTriggeringTheJob,
+                  flow
+                )
+              })
+            : {
+                project: node.project,
+                info: `not checked out. Folder to take sources from: ${options.skipProjectCheckout.get(
+                  node.project
+                )}`
+              };
         console.log(
           "checkoutDefinitionTreeParallel AFTER",
           options.skipProjectCheckout
